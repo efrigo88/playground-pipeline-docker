@@ -4,6 +4,6 @@
 docker compose down -v
 
 # Remove all files in psql-data directory
-rm -rf psql-data/*
+find psql-data -mindepth 1 ! -name '.gitkeep' -delete
 
 echo "All files in psql-data have been deleted"
