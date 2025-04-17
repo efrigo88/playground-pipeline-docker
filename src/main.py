@@ -1,8 +1,5 @@
-from dotenv import load_dotenv
-import pyspark.sql.functions as F
-import pyspark.sql.types as T
+import pandas as pd
 
-from session import create_spark_session
 from api import JSONPlaceholderClient
 from db import PostgresManager
 from logger import get_logger
@@ -10,53 +7,43 @@ from logger import get_logger
 logger = get_logger(__name__)
 
 
-def transform_albums(spark, raw_path):
+def transform_albums(raw_path):
     """Transform raw albums data into a processed DataFrame.
 
     Args:
-        spark: SparkSession instance
         raw_path: Path to the raw JSON data
 
     Returns:
         DataFrame: Processed DataFrame with transformed data
     """
-    # Define schema for the albums data
-    schema = T.ArrayType(
-        T.StructType(
-            [
-                T.StructField("userId", T.IntegerType(), False),
-                T.StructField("id", T.IntegerType(), False),
-                T.StructField("title", T.StringType(), False),
-            ]
-        )
-    )
-
     # Read JSON into DataFrame
-    # Using multiLine=True since the JSON is a single array
-    df = (
-        spark.read.option("multiLine", True)
-        .schema(schema)
-        .json(raw_path)
-        .select("element.*")
-    )  # Flatten the array structure
+    df = pd.read_json(raw_path)
 
-    # Add ingestion timestamp and rename columns
-    return df.withColumn(
-        "ingestion_timestamp", F.current_timestamp()
-    ).withColumnRenamed(
-        "userId", "user_id"
-    )  # Rename to match PostgreSQL naming convention
+    # Define column mappings and data types
+    column_mappings = {
+        "userId": "user_id",
+        "id": "album_id",
+        "title": "album_title",
+    }
+
+    # Convert data types
+    df = df.astype({"userId": "int32", "id": "int32", "title": "string"})
+
+    # Rename columns
+    df = df.rename(columns=column_mappings)
+
+    # Add ingestion timestamp
+    df["ingestion_timestamp"] = pd.Timestamp.now()
+
+    # Reorder columns
+    df = df[["album_id", "user_id", "album_title", "ingestion_timestamp"]]
+
+    return df
 
 
 def main():
     """Main function to run the data processing pipeline."""
     try:
-        # Load environment variables
-        load_dotenv()
-
-        # Initialize Spark session
-        spark = create_spark_session()
-
         # Initialize database manager
         db_manager = PostgresManager()
 
@@ -66,17 +53,11 @@ def main():
         logger.info("Successfully fetched %d albums", len(albums_data))
 
         # Save raw data
-        raw_path = "data/raw/albums.json"
+        raw_path = "data/warehouse/raw/albums.json"
         api_client.save_albums(albums_data, raw_path)
 
         # Transform data
-        bronze_df = transform_albums(spark, raw_path)
-
-        # Save to Iceberg format
-        logger.info("Saving to Iceberg format...")
-        bronze_df.write.format("iceberg").mode("append").saveAsTable(
-            "local.bronze.albums"
-        )  # Updated to use the local catalog
+        bronze_df = transform_albums(raw_path)
 
         # Create PostgreSQL table if it doesn't exist
         db_manager.create_albums_table()

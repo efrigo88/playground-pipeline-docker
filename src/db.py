@@ -2,7 +2,7 @@ import os
 
 import psycopg2
 from psycopg2.extras import execute_values
-from pyspark.sql import DataFrame
+import pandas as pd
 from dotenv import load_dotenv
 
 from logger import get_logger
@@ -29,9 +29,9 @@ class PostgresManager:
         """Create the albums table if it doesn't exist."""
         create_table_query = """
         CREATE TABLE IF NOT EXISTS albums (
+            album_id INTEGER,
             user_id INTEGER,
-            id INTEGER,
-            title TEXT,
+            album_title TEXT,
             ingestion_timestamp TIMESTAMP
         )
         """
@@ -45,20 +45,16 @@ class PostgresManager:
             logger.error("Failed to create albums table: %s", str(e))
             raise
 
-    def save_dataframe_to_postgres(self, df: DataFrame, table_name: str):
-        """Save a Spark DataFrame to PostgreSQL.
+    def save_dataframe_to_postgres(self, df: pd.DataFrame, table_name: str):
+        """Save a pandas DataFrame to PostgreSQL.
 
         Args:
-            df: Spark DataFrame to save
+            df: pandas DataFrame to save
             table_name: Name of the target table
         """
         try:
-            # Convert Spark DataFrame to list of tuples
-            data = df.collect()
-            records = [
-                (row.user_id, row.id, row.title, row.ingestion_timestamp)
-                for row in data
-            ]
+            # Convert DataFrame to list of tuples
+            records = [tuple(x) for x in df.to_numpy()]
 
             # Insert data into PostgreSQL
             with psycopg2.connect(**self.conn_params) as conn:
@@ -67,7 +63,7 @@ class PostgresManager:
                         cur,
                         (
                             f"INSERT INTO {table_name} "
-                            "(user_id, id, title, "
+                            "(album_id, user_id, album_title, "
                             "ingestion_timestamp) VALUES %s"
                         ),
                         records,

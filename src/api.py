@@ -1,16 +1,11 @@
 import os
 import json
-import logging
 from typing import Dict, Any, List
 
 import requests
+from logger import get_logger
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class JSONPlaceholderClient:
@@ -41,17 +36,28 @@ class JSONPlaceholderClient:
         return response.json()
 
     def save_albums(
-        self, albums_data: List[Dict[str, Any]], filepath: str
+        self,
+        albums_data: List[Dict[str, Any]],
+        filepath: str,
+        overwrite: bool = True,
     ) -> None:
         """Save albums data to a JSON file.
 
         Args:
             albums_data (List[Dict[str, Any]]): Albums data to save
             filepath (str): Path where to save the JSON file
+            overwrite (bool, optional): Whether to overwrite existing file.
+                Defaults to True.
 
         Raises:
             IOError: If there's an error writing the file
+            FileExistsError: If file exists and overwrite is False
         """
+        if not overwrite and os.path.exists(filepath):
+            raise FileExistsError(
+                f"File {filepath} already exists and overwrite is False"
+            )
+
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         with open(filepath, "w", encoding="utf-8") as f:

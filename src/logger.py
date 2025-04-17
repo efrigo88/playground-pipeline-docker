@@ -1,10 +1,5 @@
 import logging
 
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,

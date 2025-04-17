@@ -1,130 +1,106 @@
-# Playground Pipeline Docker
+# Data Pipeline with Docker
 
-A data pipeline using PySpark, Iceberg, and PostgreSQL, containerized with Docker for easy deployment and development.
+A data pipeline that fetches album data from JSONPlaceholder API, processes it using pandas, and stores it in PostgreSQL.
 
 ## Features
 
-- PySpark for distributed data processing
-- PostgreSQL for data storage
-- Apache Iceberg for table format
-- Dockerized environment for consistent development and deployment
-- Pre-commit hooks for code quality
-- Development tools configuration (black, isort, pytest)
-
-## Prerequisites
-
-- Docker and Docker Compose
-- Python 3.9+ (for local development)
-- Java 11 (for local Spark development)
+- Fetches album data from JSONPlaceholder API
+- Processes and transforms data using pandas
+- Stores data in PostgreSQL
+- Containerized with Docker
+- Environment variable configuration
+- Logging system
 
 ## Project Structure
 
 ```
 .
-├── data/               # Data directory mounted in container
-├── src/               # Source code
-├── .env.example       # Example environment variables
-├── .pre-commit-config.yaml  # Pre-commit hooks configuration
-├── docker-compose.yml # Docker Compose configuration
-├── Dockerfile         # Docker image definition
-├── pyproject.toml     # Python project configuration
-└── README.md          # Project documentation
+├── Dockerfile              # Docker configuration
+├── docker-compose.yml      # Docker Compose configuration
+├── pyproject.toml          # Project dependencies and configuration
+├── .env.example           # Example environment variables
+└── src/
+    ├── main.py            # Main pipeline script
+    ├── api.py             # API client for JSONPlaceholder
+    ├── db.py              # PostgreSQL database operations
+    └── logger.py          # Logging configuration
 ```
 
-## Environment Variables
+## Data Flow
 
-Create a `.env` file based on `.env.example`:
+1. Fetch album data from JSONPlaceholder API
+2. Save raw data to JSON file
+3. Transform data:
+   - Convert data types
+   - Rename columns
+   - Add ingestion timestamp
+4. Store processed data in PostgreSQL
 
-```bash
-# Spark basic configuration
-SPARK_MASTER=local[4]
-SPARK_DRIVER_MEMORY=8g
-SPARK_SHUFFLE_PARTITIONS=4
+## Data Schema
 
-# Postgres database credentials
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=postgres
-```
+### Albums Table
 
-## Getting Started
+| Column              | Type      | Description                       |
+| ------------------- | --------- | --------------------------------- |
+| album_id            | INTEGER   | Unique identifier for the album   |
+| user_id             | INTEGER   | ID of the user who owns the album |
+| album_title         | TEXT      | Title of the album                |
+| ingestion_timestamp | TIMESTAMP | When the record was processed     |
 
-### Using Docker (Recommended)
+## Setup
 
-1. Clone the repository:
-
-   ```bash
-   git clone <repository-url>
-   cd playground-pipeline-docker
-   ```
-
-2. Copy the environment file:
+1. Copy the environment variables file:
 
    ```bash
    cp .env.example .env
    ```
 
-3. Start the services:
-   ```bash
-   docker-compose up
+2. Update the `.env` file with your PostgreSQL credentials:
+
+   ```
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_USER=your_user
+   DB_PASSWORD=your_password
+   DB_NAME=your_database
    ```
 
-The pipeline will be available and the PostgreSQL database will be running.
-
-### Local Development
-
-1. Create and activate a virtual environment:
-
+3. Build and run the Docker container:
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   docker compose up -d --build
    ```
 
-2. Install dependencies:
+## Development
 
-   ```bash
-   pip install -e ".[dev]"
-   ```
+### Dependencies
 
-3. Install pre-commit hooks:
-   ```bash
-   pre-commit install
-   ```
+- Python 3.9+
+- pandas 2.2.0
+- psycopg2-binary 2.9.9
+- python-dotenv 1.0.0
+- requests 2.31.0
 
-## Development Tools
+### Development Dependencies
 
-- **Black**: Code formatting
-- **isort**: Import sorting
-- **pytest**: Testing framework
-- **pre-commit**: Git hooks for code quality
+- pytest
+- black
+- isort
+- pre-commit
+- pylint
 
-## Docker Services
+### Running Tests
 
-### Pipeline Service
+```bash
+pytest
+```
 
-- Builds from the local Dockerfile
-- Mounts the data directory
-- Depends on the PostgreSQL service
-- Restarts unless explicitly stopped
+### Code Formatting
 
-### PostgreSQL Service
-
-- Uses PostgreSQL 17.4
-- Persists data in `psql-data` directory
-- Exposes port 5432
-- Includes health checks
-- Always restarts for reliability
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+```bash
+black .
+isort .
+```
 
 ## License
 
-This project is licensed under the terms of the LICENSE file in the root of this repository.
+MIT
