@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Stop containers first to ensure database is not in use
-docker compose down
+docker compose down -v
 
 # Remove all files in psql-data directory
 rm -rf psql-data/*
