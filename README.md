@@ -1,6 +1,92 @@
 # Data Pipeline with Docker
 
-A data pipeline that fetches album data from JSONPlaceholder API, processes it using pandas, and stores it in PostgreSQL.
+This project implements a data pipeline that fetches album data from the JSONPlaceholder API, processes it, and stores it in a PostgreSQL database. The entire pipeline runs in Docker containers.
+
+## Prerequisites
+
+- Docker and Docker Compose installed
+- Python 3.8+ (for local development)
+
+## Project Structure
+
+```
+.
+├── data/                   # Data directory
+│   └── warehouse/         # Data warehouse layers
+│       ├── raw/          # Raw data
+│       └── bronze/       # Processed data
+├── src/                   # Source code
+│   ├── api.py            # API client
+│   ├── db.py             # Database operations
+│   ├── logger.py         # Logging configuration
+│   └── main.py           # Main pipeline
+├── docker-compose.yml    # Docker Compose configuration
+├── Dockerfile            # Pipeline container definition
+├── .env                  # Environment variables
+└── clean-psql-data.sh    # Database cleanup script
+```
+
+## Setup
+
+1. Clone the repository
+2. Create a `.env` file with the following variables:
+   ```
+   DB_HOST=postgres
+   DB_PORT=5432
+   DB_USER=postgres
+   DB_PASSWORD=postgres
+   DB_NAME=postgres
+   ```
+
+## Running the Pipeline
+
+Start the pipeline:
+
+```bash
+docker compose up -d
+```
+
+The pipeline will:
+
+1. Fetch album data from JSONPlaceholder API
+2. Process and transform the data
+3. Store it in PostgreSQL
+4. Exit upon completion
+
+## Database Management
+
+### Accessing the Database
+
+You can connect to the PostgreSQL database using:
+
+```bash
+docker compose exec postgres psql -U postgres
+```
+
+### Cleaning Database Data
+
+To delete all database files and start fresh:
+
+```bash
+./clean-psql-data.sh
+```
+
+This script will:
+
+- Stop all running containers
+- Delete all files in the `psql-data` directory
+- Print a confirmation message
+
+## Development
+
+For local development without Docker:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python src/main.py
+```
 
 ## Features
 
@@ -10,21 +96,6 @@ A data pipeline that fetches album data from JSONPlaceholder API, processes it u
 - Containerized with Docker
 - Environment variable configuration
 - Logging system
-
-## Project Structure
-
-```
-.
-├── Dockerfile              # Docker configuration
-├── docker-compose.yml      # Docker Compose configuration
-├── pyproject.toml          # Project dependencies and configuration
-├── .env.example           # Example environment variables
-└── src/
-    ├── main.py            # Main pipeline script
-    ├── api.py             # API client for JSONPlaceholder
-    ├── db.py              # PostgreSQL database operations
-    └── logger.py          # Logging configuration
-```
 
 ## Data Flow
 
@@ -47,40 +118,7 @@ A data pipeline that fetches album data from JSONPlaceholder API, processes it u
 | album_title         | TEXT      | Title of the album                |
 | ingestion_timestamp | TIMESTAMP | When the record was processed     |
 
-## Setup
-
-1. Copy the environment variables file:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Update the `.env` file with your PostgreSQL credentials:
-
-   ```
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_USER=your_user
-   DB_PASSWORD=your_password
-   DB_NAME=your_database
-   ```
-
-3. Build and run the Docker container:
-   ```bash
-   docker compose up -d --build
-   ```
-
-## Development
-
-### Dependencies
-
-- Python 3.9+
-- pandas 2.2.0
-- psycopg2-binary 2.9.9
-- python-dotenv 1.0.0
-- requests 2.31.0
-
-### Development Dependencies
+## Development Dependencies
 
 - pytest
 - black

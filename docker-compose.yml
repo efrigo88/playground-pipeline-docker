@@ -6,8 +6,8 @@ services:
     volumes:
       - ./data:/app/data
     depends_on:
-      - postgres
-    restart: unless-stopped
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:17.4
@@ -25,3 +25,4 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s

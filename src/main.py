@@ -59,6 +59,12 @@ def main():
         # Transform data
         bronze_df = transform_albums(raw_path)
 
+        # Save the curated file in bronze layer
+        bronze_path = "data/warehouse/bronze/albums.json"
+        bronze_df.to_json(
+            bronze_path, orient="records", force_ascii=False, indent=2
+        )
+
         # Create PostgreSQL table if it doesn't exist
         db_manager.create_albums_table()
 
