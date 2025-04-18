@@ -24,5 +24,8 @@ RUN uv pip install --no-cache -e .
 # Copy the rest of the application
 COPY . .
 
+# Expose the API port
+EXPOSE 8000
+
 # Command to run the application
 CMD ["python", "src/main.py"]

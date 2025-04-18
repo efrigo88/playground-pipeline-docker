@@ -1,6 +1,6 @@
 # Data Pipeline with Docker
 
-This project implements a data pipeline that fetches album data from the JSONPlaceholder API, processes it, and stores it in a PostgreSQL database. The entire pipeline runs in Docker containers.
+This project implements a data pipeline that fetches album data from the JSONPlaceholder API, processes it, and stores it in a PostgreSQL database. The entire pipeline runs in Docker containers and provides an API endpoint to trigger the pipeline.
 
 ## Prerequisites
 
@@ -48,10 +48,37 @@ docker compose up -d
 
 The pipeline will:
 
-1. Fetch album data from JSONPlaceholder API
-2. Process and transform the data
-3. Store it in PostgreSQL
-4. Exit upon completion
+1. Start the FastAPI server
+2. Automatically run the pipeline once on startup
+3. Keep running to accept API requests for additional pipeline runs
+
+### Triggering the Pipeline via API
+
+You can trigger the pipeline to run again using the API endpoint:
+
+```bash
+curl -X POST http://localhost:8000/trigger-pipeline
+```
+
+The API will return:
+
+- Success response (200):
+  ```json
+  {
+    "status": "success",
+    "message": "Pipeline completed successfully"
+  }
+  ```
+- Error response (500) if something goes wrong
+
+## API Features
+
+The pipeline provides a REST API with the following endpoint:
+
+- `POST /trigger-pipeline`: Triggers the data pipeline to run
+  - Automatically runs on container startup
+  - Can be triggered multiple times while containers are running
+  - Returns success/error status and message
 
 ## Database Management
 
