@@ -16,10 +16,12 @@ This project implements a data pipeline that fetches album data from the JSONPla
 │       ├── raw/          # Raw data
 │       └── bronze/       # Processed data
 ├── src/                   # Source code
-│   ├── api.py            # API client
+│   ├── api.py            # FastAPI endpoints
+│   ├── client.py         # JSONPlaceholder API client
 │   ├── db.py             # Database operations
 │   ├── logger.py         # Logging configuration
-│   └── main.py           # Main pipeline
+│   ├── main.py           # Application entry point
+│   └── pipeline.py       # Pipeline logic
 ├── docker-compose.yml    # Docker Compose configuration
 ├── Dockerfile            # Pipeline container definition
 ├── .env                  # Environment variables
@@ -38,23 +40,23 @@ This project implements a data pipeline that fetches album data from the JSONPla
    DB_NAME=postgres
    ```
 
-## Running the Pipeline
+## Running the Application
 
-Start the pipeline:
+Start the application:
 
 ```bash
 docker compose up -d
 ```
 
-The pipeline will:
+This will:
 
 1. Start the FastAPI server
-2. Automatically run the pipeline once on startup
-3. Keep running to accept API requests for additional pipeline runs
+2. Start the PostgreSQL database
+3. The API will be available at `http://localhost:8000`
 
 ### Triggering the Pipeline via API
 
-You can trigger the pipeline to run again using the API endpoint:
+You can trigger the pipeline to run using the API endpoint:
 
 ```bash
 curl -X POST http://localhost:8000/trigger-pipeline
@@ -73,10 +75,9 @@ The API will return:
 
 ## API Features
 
-The pipeline provides a REST API with the following endpoint:
+The application provides a REST API with the following endpoint:
 
 - `POST /trigger-pipeline`: Triggers the data pipeline to run
-  - Automatically runs on container startup
   - Can be triggered multiple times while containers are running
   - Returns success/error status and message
 
@@ -98,22 +99,30 @@ To delete all database files and start fresh:
 ./clean-psql-data.sh
 ```
 
-This script will:
+## Pipeline Process
 
-- Stop all running containers
-- Delete all files in the `psql-data` directory
-- Print a confirmation message
+When triggered, the pipeline will:
+
+1. Fetch album data from JSONPlaceholder API
+2. Save raw data to the warehouse's raw layer
+3. Transform the data (rename columns, add timestamps, etc.)
+4. Save transformed data to the warehouse's bronze layer
+5. Store the data in PostgreSQL
 
 ## Development
 
-For local development without Docker:
+For local development:
 
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python src/main.py
-```
+1. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Run the application:
+   ```bash
+   python src/main.py
+   ```
 
 ## Features
 
