@@ -8,10 +8,10 @@ services:
       - ./src:/app/src
     ports:
       - "8000:8000"
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
 
   postgres:
     image: postgres:17.4
@@ -23,10 +23,10 @@ services:
       - "5432:5432"
     volumes:
       - ./psql-data:/var/lib/postgresql/data
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
